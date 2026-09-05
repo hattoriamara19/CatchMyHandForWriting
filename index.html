@@ -1,25 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <title>Air Pen Writing V8</title>
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width,
+                   initial-scale=1.0,
+                   maximum-scale=1.0,
+                   user-scalable=no">
+
+    <title>Air Pen Writing V8.1</title>
 
     <link rel="stylesheet" href="style.css">
+
 </head>
+
 
 <body>
 
 <div class="app">
 
+    <!-- HEADER -->
+
     <header>
+
         <h1>✍️ Air Pen Writing</h1>
-        <p>Version 8 • True 4-Point Perspective Calibration</p>
+
+        <p>
+            Version 8.1 • Local OpenCV.js
+        </p>
+
     </header>
 
+
     <!-- CAMERA -->
+
     <section class="camera-section">
 
         <div class="camera-container">
@@ -30,11 +47,18 @@
                    playsinline>
             </video>
 
-            <canvas id="overlayCanvas"></canvas>
 
-            <canvas id="processingCanvas"></canvas>
+            <canvas id="overlayCanvas">
+            </canvas>
 
-            <div id="detectedDot"></div>
+
+            <canvas id="processingCanvas">
+            </canvas>
+
+
+            <div id="detectedDot">
+            </div>
+
 
             <div id="cameraMessage">
                 Camera not started
@@ -42,105 +66,218 @@
 
         </div>
 
+
         <div class="camera-info">
+
             Camera:
-            <strong id="cameraMode">Front</strong>
+            <strong id="cameraMode">
+                Front
+            </strong>
+
         </div>
 
     </section>
 
+
     <!-- STATUS -->
-    <div id="status" class="status">
+
+    <div id="status"
+         class="status">
+
         Loading OpenCV...
+
     </div>
 
-    <!-- CONTROLS -->
+
+    <!-- BUTTONS -->
+
     <section class="controls">
 
-        <button id="startBtn" class="start">
+        <button id="startBtn"
+                class="start">
+
             ▶ Start Camera
+
         </button>
+
 
         <button id="calibrateBtn">
+
             🎯 Calibrate
+
         </button>
+
 
         <button id="switchBtn">
+
             🔄 Switch Camera
+
         </button>
+
 
         <button id="stopBtn">
+
             ⏹ Stop
+
         </button>
+
 
         <button id="undoBtn">
+
             ↩ Undo
+
         </button>
+
 
         <button id="clearBtn">
+
             🗑 Clear
+
         </button>
 
-        <button id="saveBtn" class="save">
+
+        <button id="saveBtn"
+                class="save">
+
             💾 Save PNG
+
         </button>
 
     </section>
 
-    <!-- DRAWING -->
+
+    <!-- DRAWING AREA -->
+
     <section class="drawing-section">
 
-        <h2>Writing Area</h2>
+        <h2>
+            Writing Area
+        </h2>
 
-        <canvas id="drawingCanvas"></canvas>
+
+        <canvas id="drawingCanvas">
+        </canvas>
 
     </section>
 
+
     <!-- INSTRUCTIONS -->
+
     <section class="instructions">
 
-        <h2>📖 How to Use</h2>
+        <h2>
+            📖 How to Use
+        </h2>
+
 
         <ol>
-            <li>Put a bright green/yellow tape or marker on the pen tip.</li>
 
-            <li>Press <b>Start Camera</b>.</li>
-
-            <li>Keep the colored pen tip visible to the camera.</li>
-
-            <li>Press <b>Calibrate</b>.</li>
-
-            <li>Move the pen tip to the highlighted
-                <b>TOP-LEFT</b> target and press Calibrate.</li>
-
-            <li>Repeat for:
-                <b>TOP-RIGHT → BOTTOM-RIGHT → BOTTOM-LEFT</b>.
+            <li>
+                Put a small bright
+                <b>green/yellow marker</b>
+                on the pen tip.
             </li>
 
-            <li>After calibration, move the pen tip inside the writing area.</li>
 
-            <li>Move to the <b>PEN-UP zone</b> to stop the current stroke.</li>
+            <li>
+                Press
+                <b>Start Camera</b>.
+            </li>
 
-            <li>Use <b>Undo</b> or <b>Clear</b> whenever required.</li>
 
-            <li>Press <b>Save PNG</b> to save your writing.</li>
+            <li>
+                Make sure the colored
+                pen tip is visible.
+            </li>
+
+
+            <li>
+                Press
+                <b>Calibrate</b>.
+            </li>
+
+
+            <li>
+                Move the pen tip to
+                <b>TOP-LEFT</b>
+                and press Calibrate.
+            </li>
+
+
+            <li>
+                Move to
+                <b>TOP-RIGHT</b>
+                and press Calibrate.
+            </li>
+
+
+            <li>
+                Move to
+                <b>BOTTOM-RIGHT</b>
+                and press Calibrate.
+            </li>
+
+
+            <li>
+                Move to
+                <b>BOTTOM-LEFT</b>
+                and press Calibrate.
+            </li>
+
+
+            <li>
+                Calibration will finish
+                automatically.
+            </li>
+
+
+            <li>
+                Move the pen to write
+                in the air.
+            </li>
+
+
+            <li>
+                Move the pen to the
+                <b>PEN-UP</b> area
+                to stop the current stroke.
+            </li>
+
+
+            <li>
+                Use
+                <b>Undo</b>,
+                <b>Clear</b> and
+                <b>Save PNG</b>
+                when required.
+            </li>
+
         </ol>
 
+
         <div class="tip">
-            💡 For best tracking, use a small bright green or yellow
-            piece of tape/marker on the pen tip and use good lighting.
+
+            💡 Best results:
+            use a small bright green/yellow
+            marker on the pen tip and
+            good lighting.
+
         </div>
 
     </section>
 
 </div>
 
-<!-- OpenCV -->
-<script async
-        src="https://docs.opencv.org/4.x/opencv.js">
-</script>
+
+<!-- LOCAL OPENCV -->
+
+<script src="opencv.js"></script>
+
+<!-- MAIN JAVASCRIPT -->
 
 <script src="script.js"></script>
 
+
 </body>
+
 </html>
