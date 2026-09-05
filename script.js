@@ -1,232 +1,333 @@
 /* =========================================================
-   AIR PEN WRITING - VERSION 8
+   AIR PEN WRITING V8.1
+   LOCAL OPENCV.JS
    TRUE 4-POINT PERSPECTIVE CALIBRATION
    ========================================================= */
 
 
 /* =========================================================
-   ELEMENTS
-   ========================================================= */
+   GET HTML ELEMENTS
+========================================================= */
 
-const video = document.getElementById("camera");
+const video =
+    document.getElementById("camera");
 
 const overlayCanvas =
-    document.getElementById("overlayCanvas");
+    document.getElementById(
+        "overlayCanvas"
+    );
 
 const processingCanvas =
-    document.getElementById("processingCanvas");
+    document.getElementById(
+        "processingCanvas"
+    );
 
 const drawingCanvas =
-    document.getElementById("drawingCanvas");
+    document.getElementById(
+        "drawingCanvas"
+    );
 
 const detectedDot =
-    document.getElementById("detectedDot");
+    document.getElementById(
+        "detectedDot"
+    );
 
 const cameraMessage =
-    document.getElementById("cameraMessage");
+    document.getElementById(
+        "cameraMessage"
+    );
 
 const status =
-    document.getElementById("status");
+    document.getElementById(
+        "status"
+    );
 
 const cameraMode =
-    document.getElementById("cameraMode");
+    document.getElementById(
+        "cameraMode"
+    );
+
 
 const startBtn =
-    document.getElementById("startBtn");
+    document.getElementById(
+        "startBtn"
+    );
 
 const calibrateBtn =
-    document.getElementById("calibrateBtn");
+    document.getElementById(
+        "calibrateBtn"
+    );
 
 const switchBtn =
-    document.getElementById("switchBtn");
+    document.getElementById(
+        "switchBtn"
+    );
 
 const stopBtn =
-    document.getElementById("stopBtn");
+    document.getElementById(
+        "stopBtn"
+    );
 
 const undoBtn =
-    document.getElementById("undoBtn");
+    document.getElementById(
+        "undoBtn"
+    );
 
 const clearBtn =
-    document.getElementById("clearBtn");
+    document.getElementById(
+        "clearBtn"
+    );
 
 const saveBtn =
-    document.getElementById("saveBtn");
+    document.getElementById(
+        "saveBtn"
+    );
 
 
 /* =========================================================
-   CANVAS CONTEXTS
-   ========================================================= */
+   CONTEXTS
+========================================================= */
 
 const overlayCtx =
-    overlayCanvas.getContext("2d");
+    overlayCanvas.getContext(
+        "2d"
+    );
 
 const processingCtx =
-    processingCanvas.getContext("2d");
+    processingCanvas.getContext(
+        "2d"
+    );
 
 const drawingCtx =
-    drawingCanvas.getContext("2d");
-
-
-/* =========================================================
-   CAMERA VARIABLES
-   ========================================================= */
-
-let cameraStream = null;
-
-let cameraFacing = "user";
-
-let animationId = null;
-
-let cameraRunning = false;
+    drawingCanvas.getContext(
+        "2d"
+    );
 
 
 /* =========================================================
    OPENCV
-   ========================================================= */
+========================================================= */
 
 let cvReady = false;
 
 
 /* =========================================================
-   PEN DETECTION
-   ========================================================= */
+   CAMERA
+========================================================= */
+
+let cameraStream = null;
+
+let cameraFacing = "user";
+
+let cameraRunning = false;
+
+let animationId = null;
+
+
+/* =========================================================
+   PEN TRACKING
+========================================================= */
 
 let smoothX = null;
+
 let smoothY = null;
 
 const SMOOTHING = 0.30;
 
 
-/*
-   HSV detection range.
+/* =========================================================
+   COLOR DETECTION
+========================================================= */
 
-   This is intentionally broad enough for
-   bright green / yellow-green markers.
+/*
+   HSV range for bright green/yellow marker.
 */
 
 const LOWER_H = 15;
+
 const LOWER_S = 100;
+
 const LOWER_V = 100;
 
+
 const UPPER_H = 95;
+
 const UPPER_S = 255;
+
 const UPPER_V = 255;
 
 
 /* =========================================================
    CALIBRATION
-   ========================================================= */
+========================================================= */
 
 let calibrationActive = false;
 
 let calibrationPoints = [];
 
+let calibrationIndex = 0;
+
 let perspectiveMatrix = null;
 
-let calibrationNames = [
-    "TOP-LEFT",
-    "TOP-RIGHT",
-    "BOTTOM-RIGHT",
-    "BOTTOM-LEFT"
-];
 
-let calibrationIndex = 0;
+const calibrationNames = [
+
+    "TOP-LEFT",
+
+    "TOP-RIGHT",
+
+    "BOTTOM-RIGHT",
+
+    "BOTTOM-LEFT"
+
+];
 
 
 /* =========================================================
-   PEN-UP
-   ========================================================= */
-
-let writingEnabled = false;
+   PEN-UP ZONE
+========================================================= */
 
 const PEN_UP_ZONE = {
+
     x: 0.10,
+
     y: 0.10,
+
     radius: 0.10
+
 };
 
 
+let writingEnabled = false;
+
+
 /* =========================================================
-   DRAWING
-   ========================================================= */
+   STROKES
+========================================================= */
 
 let strokes = [];
 
 let currentStroke = [];
 
 let lastDrawX = null;
+
 let lastDrawY = null;
 
 
 /* =========================================================
-   WAIT FOR OPENCV
-   ========================================================= */
+   OPENCV LOADING
+========================================================= */
 
 function waitForOpenCV() {
 
-    if (typeof cv !== "undefined" &&
-        cv.Mat) {
+    if (
+        typeof cv !== "undefined" &&
+        cv.Mat
+    ) {
 
         cvReady = true;
 
         status.textContent =
-            "OpenCV ready. Press Start Camera.";
+            "✅ OpenCV loaded. Press Start Camera.";
+
+        console.log(
+            "OpenCV loaded successfully."
+        );
 
         return;
     }
 
-    setTimeout(waitForOpenCV, 300);
+
+    status.textContent =
+        "⏳ Loading OpenCV...";
+
+
+    setTimeout(
+        waitForOpenCV,
+        500
+    );
 }
+
 
 waitForOpenCV();
 
 
 /* =========================================================
-   RESIZE CANVASES
-   ========================================================= */
+   RESIZE
+========================================================= */
 
 function resizeCanvases() {
 
-    const rect =
+    const overlayRect =
         overlayCanvas.getBoundingClientRect();
 
-    const oldDrawing =
-        drawingCanvas.toDataURL();
 
     overlayCanvas.width =
-        Math.max(1, Math.floor(rect.width));
+        Math.max(
+            1,
+            Math.floor(
+                overlayRect.width
+            )
+        );
+
 
     overlayCanvas.height =
-        Math.max(1, Math.floor(rect.height));
+        Math.max(
+            1,
+            Math.floor(
+                overlayRect.height
+            )
+        );
 
-
-    /*
-       Drawing canvas internal resolution.
-    */
 
     const drawingRect =
         drawingCanvas.getBoundingClientRect();
 
+
     drawingCanvas.width =
-        Math.max(1, Math.floor(drawingRect.width));
+        Math.max(
+            1,
+            Math.floor(
+                drawingRect.width
+            )
+        );
+
 
     drawingCanvas.height =
-        Math.max(1, Math.floor(drawingRect.height));
+        Math.max(
+            1,
+            Math.floor(
+                drawingRect.height
+            )
+        );
 
 
-    drawingCtx.lineCap = "round";
-    drawingCtx.lineJoin = "round";
+    drawingCtx.lineCap =
+        "round";
 
 
-    if (strokes.length > 0) {
-        redrawAllStrokes();
+    drawingCtx.lineJoin =
+        "round";
+
+
+    redrawAllStrokes();
+
+
+    if (
+        cameraRunning &&
+        !calibrationActive
+    ) {
+
+        drawNormalOverlay();
     }
 }
+
 
 window.addEventListener(
     "resize",
     resizeCanvases
 );
+
 
 setTimeout(
     resizeCanvases,
@@ -236,48 +337,75 @@ setTimeout(
 
 /* =========================================================
    START CAMERA
-   ========================================================= */
+========================================================= */
 
 async function startCamera() {
 
     if (!cvReady) {
 
         status.textContent =
-            "Please wait for OpenCV to load.";
+            "OpenCV is not loaded yet.";
 
         return;
     }
 
+
     await stopCamera();
+
+
+    if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+    ) {
+
+        status.textContent =
+            "Camera API is unavailable. Use HTTPS or localhost.";
+
+        return;
+    }
+
 
     try {
 
         cameraMessage.textContent =
             "Starting camera...";
 
+
         const constraints = {
 
             audio: false,
 
             video: {
+
                 facingMode: {
+
                     ideal: cameraFacing
+
                 },
 
                 width: {
+
                     ideal: 1280
+
                 },
 
                 height: {
+
                     ideal: 720
+
                 }
+
             }
+
         };
 
 
         cameraStream =
-            await navigator.mediaDevices
-                .getUserMedia(constraints);
+            await navigator
+                .mediaDevices
+                .getUserMedia(
+                    constraints
+                );
 
 
         video.srcObject =
@@ -289,8 +417,10 @@ async function startCamera() {
 
         cameraRunning = true;
 
+
         cameraMessage.style.display =
             "none";
+
 
         cameraMode.textContent =
             cameraFacing === "user"
@@ -298,10 +428,17 @@ async function startCamera() {
                 : "Back";
 
 
+        smoothX = null;
+
+        smoothY = null;
+
+
         status.textContent =
             "Camera started. Show the colored pen tip.";
 
+
         resizeCanvases();
+
 
         detectLoop();
 
@@ -309,15 +446,22 @@ async function startCamera() {
 
     catch (error) {
 
-        console.error(error);
+        console.error(
+            "Camera error:",
+            error
+        );
+
 
         cameraRunning = false;
+
 
         cameraMessage.style.display =
             "block";
 
+
         cameraMessage.textContent =
             "Camera access failed.";
+
 
         status.textContent =
             "Allow camera permission and use HTTPS or localhost.";
@@ -327,15 +471,20 @@ async function startCamera() {
 
 /* =========================================================
    STOP CAMERA
-   ========================================================= */
+========================================================= */
 
 async function stopCamera() {
 
     cameraRunning = false;
 
-    if (animationId !== null) {
 
-        cancelAnimationFrame(animationId);
+    if (
+        animationId !== null
+    ) {
+
+        cancelAnimationFrame(
+            animationId
+        );
 
         animationId = null;
     }
@@ -345,7 +494,11 @@ async function stopCamera() {
 
         cameraStream
             .getTracks()
-            .forEach(track => track.stop());
+            .forEach(
+                track =>
+                    track.stop()
+            );
+
 
         cameraStream = null;
     }
@@ -353,20 +506,28 @@ async function stopCamera() {
 
     video.srcObject = null;
 
+
     detectedDot.style.display =
         "none";
+
 
     cameraMessage.style.display =
         "block";
 
+
     cameraMessage.textContent =
         "Camera stopped.";
+
+
+    smoothX = null;
+
+    smoothY = null;
 }
 
 
 /* =========================================================
    SWITCH CAMERA
-   ========================================================= */
+========================================================= */
 
 async function switchCamera() {
 
@@ -374,6 +535,7 @@ async function switchCamera() {
         cameraFacing === "user"
             ? "environment"
             : "user";
+
 
     cameraMode.textContent =
         cameraFacing === "user"
@@ -388,10 +550,12 @@ async function switchCamera() {
     } else {
 
         status.textContent =
-            "Camera set to " +
-            (cameraFacing === "user"
-                ? "Front"
-                : "Back") +
+            "Camera selected: " +
+            (
+                cameraFacing === "user"
+                    ? "Front"
+                    : "Back"
+            ) +
             ". Press Start Camera.";
     }
 }
@@ -399,15 +563,18 @@ async function switchCamera() {
 
 /* =========================================================
    DETECTION LOOP
-   ========================================================= */
+========================================================= */
 
 function detectLoop() {
 
     if (!cameraRunning) {
+
         return;
     }
 
+
     detectPen();
+
 
     animationId =
         requestAnimationFrame(
@@ -417,28 +584,27 @@ function detectLoop() {
 
 
 /* =========================================================
-   PEN DETECTION
-   ========================================================= */
+   DETECT PEN
+========================================================= */
 
 function detectPen() {
 
-    if (!video.videoWidth ||
-        !video.videoHeight) {
+    if (
+        !video.videoWidth ||
+        !video.videoHeight
+    ) {
 
         return;
     }
 
 
-    /*
-       Small processing resolution
-       makes Android performance better.
-    */
-
     const W = 320;
+
     const H = 240;
 
 
     processingCanvas.width = W;
+
     processingCanvas.height = H;
 
 
@@ -452,10 +618,19 @@ function detectPen() {
 
 
     let src = null;
+
     let rgb = null;
+
     let hsv = null;
+
     let mask = null;
+
     let kernel = null;
+
+    let contours = null;
+
+    let hierarchy = null;
+
 
     try {
 
@@ -473,7 +648,6 @@ function detectPen() {
 
 
         /*
-           Camera image:
            RGBA → RGB
         */
 
@@ -495,10 +669,6 @@ function detectPen() {
         );
 
 
-        /*
-           Detect bright green/yellow object.
-        */
-
         const lower =
             new cv.Mat(
                 hsv.rows,
@@ -511,6 +681,7 @@ function detectPen() {
                     0
                 ]
             );
+
 
         const upper =
             new cv.Mat(
@@ -526,6 +697,10 @@ function detectPen() {
             );
 
 
+        /*
+           HSV threshold.
+        */
+
         cv.inRange(
             hsv,
             lower,
@@ -535,17 +710,21 @@ function detectPen() {
 
 
         lower.delete();
+
         upper.delete();
 
 
         /*
-           Remove small noise.
+           Noise removal.
         */
 
         kernel =
             cv.getStructuringElement(
                 cv.MORPH_ELLIPSE,
-                new cv.Size(5, 5)
+                new cv.Size(
+                    5,
+                    5
+                )
             );
 
 
@@ -569,10 +748,10 @@ function detectPen() {
            Find contours.
         */
 
-        const contours =
+        contours =
             new cv.MatVector();
 
-        const hierarchy =
+        hierarchy =
             new cv.Mat();
 
 
@@ -587,7 +766,8 @@ function detectPen() {
 
         let bestIndex = -1;
 
-        let bestScore = -Infinity;
+        let bestScore =
+            -Infinity;
 
 
         for (
@@ -606,10 +786,13 @@ function detectPen() {
                 );
 
 
-            if (area < 15 ||
-                area > 8000) {
+            if (
+                area < 15 ||
+                area > 8000
+            ) {
 
                 contour.delete();
+
                 continue;
             }
 
@@ -625,20 +808,20 @@ function detectPen() {
                 rect.height;
 
 
-            if (rectArea <= 0) {
+            if (
+                rectArea <= 0
+            ) {
 
                 contour.delete();
+
                 continue;
             }
 
 
             const fill =
-                area / rectArea;
+                area /
+                rectArea;
 
-
-            /*
-               Calculate centroid.
-            */
 
             const moments =
                 cv.moments(
@@ -647,9 +830,12 @@ function detectPen() {
                 );
 
 
-            if (moments.m00 === 0) {
+            if (
+                moments.m00 === 0
+            ) {
 
                 contour.delete();
+
                 continue;
             }
 
@@ -658,29 +844,27 @@ function detectPen() {
                 moments.m10 /
                 moments.m00;
 
+
             const cy =
                 moments.m01 /
                 moments.m00;
 
 
-            /*
-               Tracking score.
-
-               If we already have a position,
-               prefer objects close to it.
-            */
-
             let proximity = 1;
 
 
-            if (smoothX !== null &&
-                smoothY !== null) {
+            if (
+                smoothX !== null &&
+                smoothY !== null
+            ) {
 
                 const dx =
                     cx - smoothX;
 
+
                 const dy =
                     cy - smoothY;
+
 
                 const distance =
                     Math.sqrt(
@@ -688,10 +872,12 @@ function detectPen() {
                         dy * dy
                     );
 
+
                 proximity =
                     Math.max(
                         0,
-                        1 - distance / 160
+                        1 -
+                        distance / 160
                     );
             }
 
@@ -713,11 +899,16 @@ function detectPen() {
                 proximity * 3;
 
 
-            if (score > bestScore) {
+            if (
+                score >
+                bestScore
+            ) {
 
-                bestScore = score;
+                bestScore =
+                    score;
 
-                bestIndex = i;
+                bestIndex =
+                    i;
             }
 
 
@@ -725,7 +916,9 @@ function detectPen() {
         }
 
 
-        if (bestIndex >= 0) {
+        if (
+            bestIndex >= 0
+        ) {
 
             const contour =
                 contours.get(
@@ -740,11 +933,14 @@ function detectPen() {
                 );
 
 
-            if (moments.m00 !== 0) {
+            if (
+                moments.m00 !== 0
+            ) {
 
                 const rawX =
                     moments.m10 /
                     moments.m00;
+
 
                 const rawY =
                     moments.m01 /
@@ -752,12 +948,15 @@ function detectPen() {
 
 
                 /*
-                   Smooth movement.
+                   Smooth the pen position.
                 */
 
-                if (smoothX === null) {
+                if (
+                    smoothX === null
+                ) {
 
                     smoothX = rawX;
+
                     smoothY = rawY;
 
                 } else {
@@ -765,12 +964,19 @@ function detectPen() {
                     smoothX =
                         smoothX +
                         SMOOTHING *
-                        (rawX - smoothX);
+                        (
+                            rawX -
+                            smoothX
+                        );
+
 
                     smoothY =
                         smoothY +
                         SMOOTHING *
-                        (rawY - smoothY);
+                        (
+                            rawY -
+                            smoothY
+                        );
                 }
 
 
@@ -790,6 +996,7 @@ function detectPen() {
                 );
             }
 
+
             contour.delete();
 
 
@@ -798,24 +1005,16 @@ function detectPen() {
             detectedDot.style.display =
                 "none";
 
-            /*
-               No pen detected:
-               finish current stroke.
-            */
 
             finishCurrentStroke();
         }
-
-
-        contours.delete();
-        hierarchy.delete();
 
     }
 
     catch (error) {
 
         console.error(
-            "Detection error:",
+            "OpenCV detection error:",
             error
         );
 
@@ -823,47 +1022,65 @@ function detectPen() {
 
     finally {
 
-        if (src) src.delete();
-        if (rgb) rgb.delete();
-        if (hsv) hsv.delete();
-        if (mask) mask.delete();
-        if (kernel) kernel.delete();
+        if (src)
+            src.delete();
+
+        if (rgb)
+            rgb.delete();
+
+        if (hsv)
+            hsv.delete();
+
+        if (mask)
+            mask.delete();
+
+        if (kernel)
+            kernel.delete();
+
+        if (contours)
+            contours.delete();
+
+        if (hierarchy)
+            hierarchy.delete();
     }
 }
 
 
 /* =========================================================
    SHOW DETECTED DOT
-   ========================================================= */
+========================================================= */
 
 function showDetectedDot(
     x,
     y,
-    processingWidth,
-    processingHeight
+    width,
+    height
 ) {
 
     const rect =
-        overlayCanvas.getBoundingClientRect();
+        overlayCanvas
+            .getBoundingClientRect();
 
 
     let displayX =
-        x / processingWidth *
+        x /
+        width *
         rect.width;
 
+
     let displayY =
-        y / processingHeight *
+        y /
+        height *
         rect.height;
 
 
     /*
-       Front camera preview is mirrored.
-
-       The raw camera coordinate is therefore
-       mirrored for visual display.
+       Front camera is mirrored.
     */
 
-    if (cameraFacing === "user") {
+    if (
+        cameraFacing === "user"
+    ) {
 
         displayX =
             rect.width -
@@ -874,8 +1091,10 @@ function showDetectedDot(
     detectedDot.style.left =
         displayX + "px";
 
+
     detectedDot.style.top =
         displayY + "px";
+
 
     detectedDot.style.display =
         "block";
@@ -883,8 +1102,8 @@ function showDetectedDot(
 
 
 /* =========================================================
-   GET DISPLAY CAMERA COORDINATE
-   ========================================================= */
+   DISPLAY CAMERA POINT
+========================================================= */
 
 function getDisplayCameraPoint(
     rawX,
@@ -894,18 +1113,17 @@ function getDisplayCameraPoint(
 ) {
 
     let x = rawX;
+
     let y = rawY;
 
 
-    /*
-       Convert raw camera coordinates
-       to the coordinates the user sees.
-    */
-
-    if (cameraFacing === "user") {
+    if (
+        cameraFacing === "user"
+    ) {
 
         x =
-            width - rawX;
+            width -
+            rawX;
     }
 
 
@@ -917,8 +1135,8 @@ function getDisplayCameraPoint(
 
 
 /* =========================================================
-   PROCESS DETECTED PEN
-   ========================================================= */
+   PROCESS PEN
+========================================================= */
 
 function processDetectedPen(
     x,
@@ -928,41 +1146,42 @@ function processDetectedPen(
 ) {
 
     /*
-       During calibration:
-       only show instructions.
+       Calibration mode.
     */
 
-    if (calibrationActive) {
+    if (
+        calibrationActive
+    ) {
 
-        drawCalibrationOverlay(
-            width,
-            height
-        );
+        drawCalibrationOverlay();
 
         return;
     }
 
 
     /*
-       Calibration must be completed first.
+       Must calibrate first.
     */
 
-    if (!perspectiveMatrix) {
+    if (
+        !perspectiveMatrix
+    ) {
 
         finishCurrentStroke();
 
+
         status.textContent =
-            "Calibrate the 4 corners before writing.";
+            "🎯 Calibrate the 4 corners first.";
+
+
+        drawNormalOverlay();
 
         return;
     }
 
 
     /*
-       Convert raw camera coordinate
-       to DISPLAY camera coordinate.
-
-       This is important for the front camera.
+       Convert to visible camera coordinates.
     */
 
     const displayPoint =
@@ -976,27 +1195,34 @@ function processDetectedPen(
 
     /*
        PEN-UP zone.
-
-       It is in the upper-left corner
-       of the visible camera.
     */
 
     const zoneX =
-        width * PEN_UP_ZONE.x;
+        width *
+        PEN_UP_ZONE.x;
+
 
     const zoneY =
-        height * PEN_UP_ZONE.y;
+        height *
+        PEN_UP_ZONE.y;
+
 
     const zoneRadius =
-        Math.min(width, height) *
+        Math.min(
+            width,
+            height
+        ) *
         PEN_UP_ZONE.radius;
 
 
     const dx =
-        displayPoint.x - zoneX;
+        displayPoint.x -
+        zoneX;
+
 
     const dy =
-        displayPoint.y - zoneY;
+        displayPoint.y -
+        zoneY;
 
 
     const distance =
@@ -1006,40 +1232,40 @@ function processDetectedPen(
         );
 
 
-    if (distance <= zoneRadius) {
+    if (
+        distance <= zoneRadius
+    ) {
 
-        if (writingEnabled) {
+        if (
+            writingEnabled
+        ) {
 
             finishCurrentStroke();
 
-            writingEnabled = false;
+            writingEnabled =
+                false;
         }
 
 
-        drawPenUpZone(
-            width,
-            height
-        );
-
-
         status.textContent =
-            "PEN-UP zone • Writing paused.";
+            "🟡 PEN-UP • Writing paused.";
+
+
+        drawNormalOverlay();
 
         return;
     }
 
 
     /*
-       Pen is outside PEN-UP zone.
-       Writing can continue.
+       Enable writing.
     */
 
     writingEnabled = true;
 
 
     /*
-       Convert camera point through
-       TRUE perspective transform.
+       TRUE perspective mapping.
     */
 
     const mapped =
@@ -1050,12 +1276,13 @@ function processDetectedPen(
 
 
     if (!mapped) {
+
         return;
     }
 
 
     /*
-       Ignore extreme jumps.
+       Ignore very large jumps.
     */
 
     if (
@@ -1064,84 +1291,10 @@ function processDetectedPen(
     ) {
 
         const dx =
-            mapped.x - lastDrawX;
+            mapped.x -
+            lastDrawX;
+
 
         const dy =
-            mapped.y - lastDrawY;
-
-        const distance =
-            Math.sqrt(
-                dx * dx +
-                dy * dy
-            );
-
-
-        if (distance > 180) {
-
-            finishCurrentStroke();
-
-            lastDrawX =
-                mapped.x;
-
-            lastDrawY =
-                mapped.y;
-
-            return;
-        }
-    }
-
-
-    drawAirWriting(
-        mapped.x,
-        mapped.y
-    );
-
-
-    status.textContent =
-        "✍️ Writing...";
-}
-
-
-/* =========================================================
-   START CALIBRATION
-   ========================================================= */
-
-function startCalibration() {
-
-    if (!cameraRunning) {
-
-        status.textContent =
-            "Start the camera first.";
-
-        return;
-    }
-
-
-    calibrationActive = true;
-
-    calibrationPoints = [];
-
-    calibrationIndex = 0;
-
-    perspectiveMatrix = null;
-
-    writingEnabled = false;
-
-    finishCurrentStroke();
-
-
-    status.textContent =
-        "Calibration started. Move pen tip to TOP-LEFT.";
-
-    drawCalibrationOverlay(
-        320,
-        240
-    );
-}
-
-
-/* =========================================================
-   RECORD CALIBRATION POINT
-   ========================================================= */
-
-function recordCalibrationPoi
+            mapped.y -
+    
