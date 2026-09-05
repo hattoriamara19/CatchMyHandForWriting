@@ -1,0 +1,314 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #f2f4f7;
+    color: #222;
+}
+
+body {
+    min-height: 100vh;
+}
+
+.app {
+    width: 100%;
+    max-width: 900px;
+    margin: auto;
+    padding: 15px;
+}
+
+/* HEADER */
+
+header {
+    text-align: center;
+    background: white;
+    padding: 18px 10px;
+    border-radius: 14px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+header p {
+    margin: 7px 0 0;
+    color: #666;
+    font-size: 14px;
+}
+
+/* CAMERA */
+
+.camera-section {
+    background: white;
+    padding: 10px;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.camera-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #111;
+    border-radius: 10px;
+}
+
+#camera {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    left: 0;
+    top: 0;
+}
+
+#overlayCanvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+#processingCanvas {
+    display: none;
+}
+
+/* DETECTED PEN DOT */
+
+#detectedDot {
+    position: absolute;
+
+    width: 20px;
+    height: 20px;
+
+    border-radius: 50%;
+
+    background: red;
+
+    border: 3px solid white;
+
+    box-shadow:
+        0 0 0 2px red,
+        0 0 15px red;
+
+    transform: translate(-50%, -50%);
+
+    display: none;
+
+    z-index: 10;
+
+    pointer-events: none;
+}
+
+/* CAMERA MESSAGE */
+
+#cameraMessage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    color: white;
+
+    background: rgba(0,0,0,0.65);
+
+    padding: 12px 18px;
+
+    border-radius: 8px;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    pointer-events: none;
+}
+
+/* CAMERA INFO */
+
+.camera-info {
+    text-align: center;
+    padding: 8px;
+    font-size: 14px;
+}
+
+/* STATUS */
+
+.status {
+    margin-top: 15px;
+
+    background: white;
+
+    padding: 12px;
+
+    border-radius: 10px;
+
+    text-align: center;
+
+    font-weight: bold;
+
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+/* BUTTONS */
+
+.controls {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(130px, 1fr));
+
+    gap: 8px;
+
+    margin-top: 15px;
+}
+
+button {
+    border: none;
+
+    padding: 13px 8px;
+
+    border-radius: 9px;
+
+    background: #e5e7eb;
+
+    color: #111;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    touch-action: manipulation;
+}
+
+button:active {
+    transform: scale(0.97);
+}
+
+button:hover {
+    filter: brightness(0.95);
+}
+
+button.start {
+    background: #22c55e;
+    color: white;
+}
+
+button.save {
+    background: #2563eb;
+    color: white;
+}
+
+/* DRAWING */
+
+.drawing-section {
+    margin-top: 15px;
+
+    background: white;
+
+    padding: 12px;
+
+    border-radius: 14px;
+
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.drawing-section h2 {
+    margin: 0 0 10px;
+    text-align: center;
+    font-size: 20px;
+}
+
+#drawingCanvas {
+    display: block;
+
+    width: 100%;
+
+    aspect-ratio: 16 / 10;
+
+    background: white;
+
+    border: 2px solid #222;
+
+    border-radius: 8px;
+
+    touch-action: none;
+}
+
+/* INSTRUCTIONS */
+
+.instructions {
+    margin-top: 15px;
+
+    background: white;
+
+    padding: 15px;
+
+    border-radius: 14px;
+
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.instructions h2 {
+    margin-top: 0;
+}
+
+.instructions li {
+    margin-bottom: 8px;
+    line-height: 1.45;
+}
+
+.tip {
+    background: #fff8d6;
+
+    border-left: 5px solid #eab308;
+
+    padding: 12px;
+
+    border-radius: 6px;
+
+    line-height: 1.45;
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+
+    .app {
+        padding: 8px;
+    }
+
+    header h1 {
+        font-size: 23px;
+    }
+
+    header p {
+        font-size: 12px;
+    }
+
+    .controls {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    button {
+        font-size: 13px;
+        padding: 12px 5px;
+    }
+
+    .instructions {
+        font-size: 14px;
+    }
+}
